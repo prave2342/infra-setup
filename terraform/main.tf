@@ -2,6 +2,14 @@ resource "aws_vpc" "eks-vpc" {
     cidr_block  = var.vpc_cidr
 
 }
+
+resource "aws_internet_gateway" "gateway" {
+    vpc_id = aws_vpc.eks-vpc.id
+    depends_on = [
+        aws_vpc.eks-vpc
+    ]
+}
+
 resource "aws_subnet" "eks-subnet" {
     count                   = length(var.subnet_cidrs)
     vpc_id                  = aws_vpc.eks-vpc.id
@@ -12,6 +20,8 @@ resource "aws_subnet" "eks-subnet" {
     ]
 }
 
+
+
 resource "aws_subnet" "jumpbox-subnet" {
     count                   = length(var.jumpbox_subnet_cidrs)
     vpc_id                  = aws_vpc.eks-vpc.id
@@ -19,6 +29,65 @@ resource "aws_subnet" "jumpbox-subnet" {
     availability_zone       = var.zones[count.index]
     map_public_ip_on_launch = true
     depends_on = [
+        aws_vpc.eks-vpc
+    ]
+}
+
+resource "aws_route_table" "public-rt" {
+    vpc_id = aws_vpc.eks-vpc.id
+    route {
+        cidr_block = "0.0.0.0/0"
+        gateway_id = aws_internet_gateway.gateway.id
+    }
+    depends_on = [
+        aws_vpc.eks-vpc
+    ]
+}
+
+resource "aws_route_table_association" "jumpbox-rt" {
+    count          = length(var.jumpbox_subnet_cidrs)
+    subnet_id      = aws_subnet.jumpbox-subnet[count.index].id
+    route_table_id = aws_route_table.public-rt.id
+    depends_on = [
+        aws_vpc.eks-vpc,
+        aws_route_table.public_rt
+    ]
+}
+
+resource "aws_eip" "nat-eip" {
+    vpc = true
+}
+
+resource "aws_nat_gateway" "nat" {
+    allocation_id = aws_eip.nat-eip.id
+    subnet_id     = aws_subnet.jumpbox-subnet[0].id
+    depends_on    = [
+        aws_internet_gateway.gateway,
+        aws_eip.nat-eip,
+        aws_subnet.jumpbox-subnet
+
+    ]
+}
+
+resource "aws_route_table" "eks-rt" {
+    vpc_id = aws_vpc.eks-vpc.id
+    route {
+        cidr_block     = "0.0.0.0/0"
+        nat_gateway_id = aws_nat_gateway.nat.id
+    }
+    depends_on = [
+        aws_nat_gateway.nat,
+        aws_vpc.eks-vpc
+    ]
+}
+
+
+resource "aws_route_table_association" "private-rta" {
+  count          = length(var.subnet_cidrs)
+  subnet_id      = aws_subnet.eks-subnet[count.index].id
+  route_table_id = aws_route_table.eks-rt.id
+      depends_on =[
+        aws_route_table.eks-rt,
         aws_vpc.eks-vpc
     ]
 }
@@ -120,7 +189,10 @@ resource "aws_eks_node_group" "eks_nodes" {
         aws_eks_cluster.eks-cluster,
         aws_iam_role_policy_attachment.node-policy,
         aws_iam_role_policy_attachment.cni-policy,
-        aws_iam_role_policy_attachment.eks-registry
+        aws_iam_role_policy_attachment.eks-registry,
+        aws_nat_gateway.nat,
+        aws_route_table.eks-rt,
+        aws_route_table_association.private-rta
     ]
 }
 
