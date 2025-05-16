@@ -15,7 +15,6 @@ resource "aws_subnet" "eks-subnet" {
     ]
 }
 
-
 resource "aws_subnet" "jumpbox-subnet" {
     count                   = length(var.jumpbox_subnet_cidrs)
     vpc_id                  = aws_vpc.eks-vpc.id
@@ -131,22 +130,22 @@ resource "aws_security_group" "eks-node-nsg" {
 }
 
 resource "aws_security_group" "eks-cluster-sg" {
-  name        = "${var.cluster_name}-cluster-sg"
-  vpc_id      = aws_vpc.eks-vpc.id
-
-  ingress {
-    from_port       = 443
-    to_port         = 443
-    protocol        = "tcp"
-    security_groups = [aws_security_group.jumpbox-nsg.id]
-  }
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+    name        = "${var.cluster_name}-cluster-sg"
+    vpc_id      = aws_vpc.eks-vpc.id
+    ingress {
+        from_port       = 443
+        to_port         = 443
+        protocol        = "tcp"
+        security_groups = [aws_security_group.jumpbox-nsg.id]
+     }
+    egress {
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
 }
+
 resource "aws_iam_role" "eks-cluster-role" {
     name               = "${var.cluster_name}-eks-cluster-role"
     assume_role_policy = jsonencode({
@@ -188,18 +187,18 @@ resource "aws_iam_role_policy_attachment" "eks-policy-attach" {
 }
 
 resource "aws_iam_role_policy_attachment" "node-policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = aws_iam_role.eks-node-role.name
+    policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+    role       = aws_iam_role.eks-node-role.name
 }
 
 resource "aws_iam_role_policy_attachment" "cni-policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-  role       = aws_iam_role.eks-node-role.name
+    policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+    role       = aws_iam_role.eks-node-role.name
 }
 
 resource "aws_iam_role_policy_attachment" "eks-registry" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.eks-node-role.name
+    policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+    role       = aws_iam_role.eks-node-role.name
 }
 
 resource "aws_eks_cluster" "eks-cluster" {
@@ -256,8 +255,4 @@ resource "aws_instance" "jumpbox" {
         aws_subnet.eks-subnet,
         aws_key_pair.key
     ]
-}
-
-output "jumpbox_ip" {
-    value = aws_instance.jumpbox.public_ip
 }
