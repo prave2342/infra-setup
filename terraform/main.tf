@@ -47,12 +47,12 @@ resource "aws_route_table" "public-rt" {
 resource "aws_route_table_association" "jumpbox-rt" {
     count          = length(var.jumpbox_subnet_cidrs)
     subnet_id      = aws_subnet.jumpbox-subnet[count.index].id
-    route_table_id = aws_route_table.public-rt.id
+    route_table_id = aws_route_table.public-rt.id   
     depends_on = [
         aws_vpc.eks-vpc,
         aws_route_table.public-rt
     ]
-}
+}   
 
 resource "aws_eip" "nat-eip" {
     domain = "vpc"
@@ -101,6 +101,13 @@ resource "aws_security_group" "jumpbox-nsg" {
         to_port     = 22
         protocol    = "tcp"
         cidr_blocks = [var.my_ip]
+    }
+    egress {
+        description = "Allow all outbound traffic"
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
     }
 }
 
