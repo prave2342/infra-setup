@@ -2,8 +2,10 @@ resource "aws_vpc" "eks-vpc" {
     cidr_block  = var.vpc_cidr
 }
 resource "aws_subnet" "eks-subnet" {
-    vpc_id     = aws_vpc.eks-vpc.id
-    cidr_block = var.subnet_cidr
+    count                   = length(var.subnet_cidrs)
+    vpc_id                  = aws_vpc.eks-vpc.id
+    cidr_block              = var.subnet_cidrs[count.index]
+    availability_zone       = var.zones[count.index]
     depends_on = [
         aws_vpc.eks-vpc
     ]
@@ -34,7 +36,7 @@ resource "aws_eks_cluster" "eks-cluster" {
     name     = var.cluster_name
     role_arn = aws_iam_role.eks-cluster-role.arn
     vpc_config {
-        subnet_ids              = [aws_subnet.eks-subnet.id]
+        subnet_ids              = aws_subnet.eks_subnet[*].id
         endpoint_private_access = true
         endpoint_public_access  = false
     }
