@@ -55,7 +55,7 @@ resource "aws_instance" "jumpbox" {
     ami           = var.ami
     instance_type = var.instance_type
     subnet_id     = aws_subnet.eks-subnet[0].id
-    key_name      = aws_key_pair.key
+    key_name      = aws_key_pair.key.key_name
     depends_on = [
         aws_subnet.eks-subnet,
         aws_key_pair.key
