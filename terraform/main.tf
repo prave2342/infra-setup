@@ -2,7 +2,7 @@ resource "aws_vpc" "eks-vpc" {
     cidr_block  = var.vpc_cidr
 }
 resource "aws_subnet" "eks-subnet" {
-    vpc_id     = aws_vpc.vpc.id
+    vpc_id     = aws_vpc.eks-vpc.id
     cidr_block = var.subnet_cidr
     depends_on = [
         aws_vpc.eks-vpc
