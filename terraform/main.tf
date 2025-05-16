@@ -54,9 +54,9 @@ resource "aws_route_table_association" "jumpbox-rt" {
     ]
 }  
 
-resource "aws_route_table_association" "jumpbox-rt-nat" {
-    count          = length(var.jumpbox_subnet_cidrs)
-    subnet_id      = aws_subnet.jumpbox-subnet[count.index].id
+resource "aws_route_table_association" "eks-rt-nat" {
+    count          = length(var.subnet_cidrs)
+    subnet_id      = aws_subnet.eks-subnet[count.index].id
     route_table_id = aws_route_table.eks-rt.id   
     depends_on = [
         aws_vpc.eks-vpc,
