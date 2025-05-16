@@ -52,6 +52,16 @@ resource "aws_route_table_association" "jumpbox-rt" {
         aws_vpc.eks-vpc,
         aws_route_table.public-rt
     ]
+}  
+
+resource "aws_route_table_association" "jumpbox-rt-nat" {
+    count          = length(var.jumpbox_subnet_cidrs)
+    subnet_id      = aws_subnet.jumpbox-subnet[count.index].id
+    route_table_id = aws_route_table.eks-rt.id   
+    depends_on = [
+        aws_vpc.eks-vpc,
+        aws_route_table.eks-rt
+    ]
 }   
 
 resource "aws_eip" "nat-eip" {
@@ -111,6 +121,23 @@ resource "aws_security_group" "jumpbox-nsg" {
     }
 }
 
+
+resource "aws_security_group" "eks-node-nsg" {
+    name        = "eks-node-nsg"
+    vpc_id      = aws_vpc.eks-vpc.id
+    ingress {
+        from_port   = 443
+        to_port     = 443
+        protocol    = "tcp"
+        cidr_blocks = [aws_subnet.jumpbox-subnet[0].cidr_block]
+    }
+    egress {
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+}
 resource "aws_iam_role" "eks-cluster-role" {
     name               = "${var.cluster_name}-eks-cluster-role"
     assume_role_policy = jsonencode({
