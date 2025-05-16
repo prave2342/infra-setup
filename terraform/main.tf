@@ -131,7 +131,7 @@ resource "aws_security_group" "eks-node-nsg" {
         from_port   = 443
         to_port     = 443
         protocol    = "tcp"
-        cidr_blocks = [aws_subnet.jumpbox-subnet[0].cidr_block]
+        security_groups = [aws_security_group.jumpbox-nsg.id]
     }
     egress {
         from_port   = 0
