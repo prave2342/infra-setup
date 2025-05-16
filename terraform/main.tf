@@ -206,7 +206,7 @@ resource "aws_instance" "jumpbox" {
     instance_type   = var.instance_type
     subnet_id       = aws_subnet.eks-subnet[0].id
     key_name        = aws_key_pair.key.key_name
-    security_groups = [aws_security_group.jumpbox-nsg.name]
+    vsecurity_groups = [aws_security_group.jumpbox-nsg.name]
     depends_on = [
         aws_subnet.eks-subnet,
         aws_key_pair.key
