@@ -197,7 +197,7 @@ resource "aws_eks_cluster" "eks-cluster" {
     depends_on = [
         aws_iam_role_policy_attachment.eks-policy-attach,
         aws_subnet.eks-subnet,
-        aws_security_group.jumpbox-nsg.
+        aws_security_group.jumpbox-nsg
     ]
 }
 
