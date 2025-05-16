@@ -31,3 +31,9 @@ variable "ami" {
 variable "instance_type" {
     type = string
 }
+variable "node_instance_types" {
+    type = list(string)
+}
+variable "node_ami_type"{
+    type = string
+}
