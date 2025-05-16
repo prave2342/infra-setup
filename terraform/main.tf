@@ -88,8 +88,8 @@ resource "aws_eks_node_group" "eks_nodes" {
         max_size     = 2
         min_size     = 1
     }
-    instance_types = var.node_instance_types ["t3.medium"]
-    ami_type = var.node_ami_type "AL2_x86_64"
+    instance_types = var.node_instance_types
+    ami_type = var.node_ami_type
     depends_on = [
         aws_eks_cluster.eks-cluster,
         aws_iam_role_policy_attachment.node-policy,
