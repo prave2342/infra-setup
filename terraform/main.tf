@@ -55,7 +55,7 @@ resource "aws_route_table_association" "jumpbox-rt" {
 }
 
 resource "aws_eip" "nat-eip" {
-    domain = true
+    domain = vpc
 }
 
 resource "aws_nat_gateway" "nat" {
