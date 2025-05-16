@@ -5,13 +5,6 @@ resource "aws_vpc" "eks-vpc" {
 
 }
 
-resource "aws_internet_gateway" "gateway" {
-    vpc_id = aws_vpc.eks-vpc.id
-    depends_on = [
-        aws_vpc.eks-vpc
-    ]
-}
-
 resource "aws_subnet" "eks-subnet" {
     count                   = length(var.subnet_cidrs)
     vpc_id                  = aws_vpc.eks-vpc.id
@@ -23,13 +16,19 @@ resource "aws_subnet" "eks-subnet" {
 }
 
 
-
 resource "aws_subnet" "jumpbox-subnet" {
     count                   = length(var.jumpbox_subnet_cidrs)
     vpc_id                  = aws_vpc.eks-vpc.id
     cidr_block              = var.jumpbox_subnet_cidrs[count.index]
     availability_zone       = var.zones[count.index]
     map_public_ip_on_launch = true
+    depends_on = [
+        aws_vpc.eks-vpc
+    ]
+}
+
+resource "aws_internet_gateway" "gateway" {
+    vpc_id = aws_vpc.eks-vpc.id
     depends_on = [
         aws_vpc.eks-vpc
     ]
@@ -55,16 +54,6 @@ resource "aws_route_table_association" "jumpbox-rt" {
         aws_route_table.public-rt
     ]
 }  
-
-resource "aws_route_table_association" "eks-rt-nat" {
-    count          = length(var.subnet_cidrs)
-    subnet_id      = aws_subnet.eks-subnet[count.index].id
-    route_table_id = aws_route_table.eks-rt.id   
-    depends_on = [
-        aws_vpc.eks-vpc,
-        aws_route_table.eks-rt
-    ]
-}   
 
 resource "aws_eip" "nat-eip" {
     domain = "vpc"
@@ -93,6 +82,16 @@ resource "aws_route_table" "eks-rt" {
     ]
 }
 
+
+resource "aws_route_table_association" "eks-rt-nat" {
+    count          = length(var.subnet_cidrs)
+    subnet_id      = aws_subnet.eks-subnet[count.index].id
+    route_table_id = aws_route_table.eks-rt.id   
+    depends_on = [
+        aws_vpc.eks-vpc,
+        aws_route_table.eks-rt
+    ]
+}  
 
 resource "aws_security_group" "jumpbox-nsg" {
     name   = var.jumpbox_nsg_name
@@ -129,6 +128,24 @@ resource "aws_security_group" "eks-node-nsg" {
         protocol    = "-1"
         cidr_blocks = ["0.0.0.0/0"]
     }
+}
+
+resource "aws_security_group" "eks-cluster-sg" {
+  name        = "${var.cluster_name}-cluster-sg"
+  vpc_id      = aws_vpc.eks-vpc.id
+
+  ingress {
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    security_groups = [aws_security_group.jumpbox-nsg.id]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 resource "aws_iam_role" "eks-cluster-role" {
     name               = "${var.cluster_name}-eks-cluster-role"
@@ -192,12 +209,12 @@ resource "aws_eks_cluster" "eks-cluster" {
         subnet_ids              = aws_subnet.eks-subnet[*].id
         endpoint_private_access = true
         endpoint_public_access  = false
-        security_group_ids = [aws_security_group.jumpbox-nsg.id]
+        security_group_ids = [aws_security_group.eks-cluster-sg.id]
     }
     depends_on = [
         aws_iam_role_policy_attachment.eks-policy-attach,
         aws_subnet.eks-subnet,
-        aws_security_group.jumpbox-nsg
+        aws_security_group.eks-cluster-sg
     ]
 }
 
