@@ -45,3 +45,21 @@ resource "aws_eks_cluster" "eks-cluster" {
         aws_subnet.eks-subnet
     ]
 }
+
+resource "aws_key_pair" "key" {
+    key_name   = var.key_name
+    public_key = var.pub_key
+}
+
+resource "aws_instance" "jumpbox" {
+    ami           = var.ami
+    instance_type = var.instance_type
+    subnet_id     = aws_subnet.eks-subnet[0].id
+    key_name      = aws_key_pair.key
+    depends_on = [
+        aws_subnet.eks-subnet,
+        aws_key_pair.key
+    ]
+}
+
+

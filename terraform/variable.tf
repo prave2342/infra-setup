@@ -19,3 +19,15 @@ variable "secret_key"{
 variable "zones"{
     type = list(string)
 }
+variable "key_name"{
+    type = string
+}
+variable "pub_key"{
+    type = string
+}
+variable "ami" {
+    type = string
+}
+variable "instance_type" {
+    type = string
+}
