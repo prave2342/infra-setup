@@ -15,7 +15,7 @@ resource "aws_subnet" "eks-subnet" {
 resource "aws_subnet" "jumpbox-subnet" {
     count                   = length(var.jumpbox_subnet_cidrs)
     vpc_id                  = aws_vpc.eks-vpc.id
-    cidr_block              = var.jumpbox_subnet_cidr
+    cidr_block              = var.jumpbox_subnet_cidrs[count.index]
     availability_zone       = var.zones[count.index]
     map_public_ip_on_launch = true
     depends_on = [
