@@ -34,6 +34,15 @@ variable "instance_type" {
 variable "node_instance_types" {
     type = list(string)
 }
-variable "node_ami_type"{
+variable "node_ami_type" {
+    type = string
+}
+variable "jumpbox_subnet_cidrs" {
+    type = list(string)
+}
+variable "jumpbox_nsg_name" {
+    type = string
+}
+variable "my_ip" {
     type = string
 }

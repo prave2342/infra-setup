@@ -1,5 +1,6 @@
 resource "aws_vpc" "eks-vpc" {
     cidr_block  = var.vpc_cidr
+
 }
 resource "aws_subnet" "eks-subnet" {
     count                   = length(var.subnet_cidrs)
@@ -10,6 +11,30 @@ resource "aws_subnet" "eks-subnet" {
         aws_vpc.eks-vpc
     ]
 }
+
+resource "aws_subnet" "jumpbox-subnet" {
+    count                   = length(var.jumpbox_subnet_cidrs)
+    vpc_id                  = aws_vpc.eks-vpc.id
+    cidr_block              = var.jumpbox_subnet_cidr
+    availability_zone       = var.zones[count.index]
+    map_public_ip_on_launch = true
+    depends_on = [
+        aws_vpc.eks-vpc
+    ]
+}
+
+resource "aws_security_group" "jumpbox-nsg" {
+    name   = var.jumpbox_nsg_name
+    vpc_id = aws_vpc.eks-vpc.id
+    ingress {
+        description = "Allow SSH from your local machine"
+        from_port   = 22
+        to_port     = 22
+        protocol    = "tcp"
+        cidr_blocks = [var.my_ip]
+    }
+}
+
 resource "aws_iam_role" "eks-cluster-role" {
     name               = "${var.cluster_name}-eks-cluster-role"
     assume_role_policy = jsonencode({
@@ -41,6 +66,7 @@ resource "aws_iam_role" "eks-node-role" {
         ]
     })
 }
+
 resource "aws_iam_role_policy_attachment" "eks-policy-attach" {
     policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
     role       = aws_iam_role.eks-cluster-role.name
@@ -104,12 +130,17 @@ resource "aws_key_pair" "key" {
 }
 
 resource "aws_instance" "jumpbox" {
-    ami           = var.ami
-    instance_type = var.instance_type
-    subnet_id     = aws_subnet.eks-subnet[0].id
-    key_name      = aws_key_pair.key.key_name
+    ami             = var.ami
+    instance_type   = var.instance_type
+    subnet_id       = aws_subnet.eks-subnet[0].id
+    key_name        = aws_key_pair.key.key_name
+    security_groups = [aws_security_group.jumpbox-nsg.name]
     depends_on = [
         aws_subnet.eks-subnet,
         aws_key_pair.key
     ]
+}
+
+output "jumpbox_ip" {
+    value = aws_instance.jumpbox.public_ip
 }
