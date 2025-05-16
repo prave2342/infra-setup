@@ -94,16 +94,6 @@ resource "aws_route_table" "eks-rt" {
 }
 
 
-resource "aws_route_table_association" "private-rta" {
-  count          = length(var.subnet_cidrs)
-  subnet_id      = aws_subnet.eks-subnet[count.index].id
-  route_table_id = aws_route_table.eks-rt.id
-      depends_on =[
-        aws_route_table.eks-rt,
-        aws_vpc.eks-vpc
-    ]
-}
-
 resource "aws_security_group" "jumpbox-nsg" {
     name   = var.jumpbox_nsg_name
     vpc_id = aws_vpc.eks-vpc.id
@@ -214,6 +204,7 @@ resource "aws_eks_node_group" "eks_nodes" {
     node_group_name = "${var.cluster_name}-node-group"
     node_role_arn   = aws_iam_role.eks-node-role.arn
     subnet_ids      = aws_subnet.eks-subnet[*].id
+    vpc_security_group_ids = [aws_security_group.eks-node-nsg.id]
     scaling_config {
         desired_size = 1
         max_size     = 2
@@ -228,7 +219,7 @@ resource "aws_eks_node_group" "eks_nodes" {
         aws_iam_role_policy_attachment.eks-registry,
         aws_nat_gateway.nat,
         aws_route_table.eks-rt,
-        aws_route_table_association.private-rta
+        aws_security_group.eks-node-nsg
     ]
 }
 
