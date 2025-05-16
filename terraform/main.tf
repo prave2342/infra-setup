@@ -50,12 +50,12 @@ resource "aws_route_table_association" "jumpbox-rt" {
     route_table_id = aws_route_table.public-rt.id
     depends_on = [
         aws_vpc.eks-vpc,
-        aws_route_table.public_rt
+        aws_route_table.public-rt
     ]
 }
 
 resource "aws_eip" "nat-eip" {
-    vpc = true
+    domain = true
 }
 
 resource "aws_nat_gateway" "nat" {
