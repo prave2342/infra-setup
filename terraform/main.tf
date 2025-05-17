@@ -201,6 +201,11 @@ resource "aws_iam_role_policy_attachment" "eks-registry" {
     role       = aws_iam_role.eks-node-role.name
 }
 
+resource "aws_iam_role_policy_attachment" "ebs_csi_policy" {
+    policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+    role       = aws_iam_role.eks-node-role.name 
+}
+
 resource "aws_eks_cluster" "eks-cluster" {
     name     = var.cluster_name
     role_arn = aws_iam_role.eks-cluster-role.arn

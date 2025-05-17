@@ -64,7 +64,8 @@ kind: Service
 metadata:
   name: traefik
   annotations:
-    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-eip-allocations: eipalloc-0e3a66d7b19e73a94,eipalloc-07dd5b4dd3d123beb
   namespace: traefik
 spec:
   ports:
@@ -78,10 +79,8 @@ spec:
       name: https
       port: 443
   type: LoadBalancer
-  loadBalancerIP: 10.84.248.47
   selector:
     app: traefik
-  sessionAffinity: ClientIP
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -92,7 +91,7 @@ metadata:
     app: traefik
 spec:
   replicas: 1
-  selector:
+    selector:
     matchLabels:
       app: traefik
   template:
@@ -122,14 +121,6 @@ spec:
               containerPort: 443
             - name: admin
               containerPort: 8080
-          volumeMounts:
-            - name: portal-cert
-              mountPath: /certs
-              readOnly: true
-      volumes:
-        - name: portal-cert
-          secret:
-            secretName: portal-cert
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
@@ -145,7 +136,7 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: traefik-dashboard
-  namespace: traefik
+    namespace: traefik
   annotations:
     kubernetes.io/ingress.class: traefik
 spec:
@@ -153,56 +144,13 @@ spec:
     - web
     - websecure
   routes:
-    - match: Host(`cloudportal.jci.com`)
+    - match: Host(`live.cddemo.com`)
       kind: Rule
       middlewares:
         - name: redirect-https
       services:
         - name: traefik
           port: 8080
-  tls:
-    secretName: portal-cert
-    domains:
-    domains:
-    - main: cloudportal.jci.com
-      sans:
-      - cloudportal.jci.com
 ---
-apiVersion: traefik.containo.us/v1alpha1
-kind: TLSStore
-metadata:
-  name: traefik-tls
-  namespace: traefik
-spec:
-  defaultCertificate:
-    secretName: portal-cert
------
 
-apiVersion: apiextensions.k8s.io/v1beta1
-kind: CustomResourceDefinition
-metadata:
-  name: ingressroutes.traefik.containo.us
 
-spec:
-  group: traefik.containo.us
-  version: v1alpha1
-  names:
-    kind: IngressRoute
-    plural: ingressroutes
-    singular: ingressroute
-  scope: Namespaced
----
-apiVersion: apiextensions.k8s.io/v1beta1
-kind: CustomResourceDefinition
-metadata:
-  name: middlewares.traefik.containo.us
-
-spec:
-  group: traefik.containo.us
-  version: v1alpha1
-  names:
-    kind: Middleware
-    plural: middlewares
-    singular: middleware
-  scope: Namespaced
----
