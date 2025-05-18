@@ -206,6 +206,37 @@ resource "aws_iam_role_policy_attachment" "ebs_csi_policy" {
     role       = aws_iam_role.eks-node-role.name 
 }
 
+resource "aws_iam_role" "ecr-role" {
+  name = var.ecr_role
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      },
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_instance_profile" "jumpbox-profile" {
+  name = var.ecr_profile
+  role = aws_iam_role.ecr-role.name
+  depends_on = [
+    aws_iam_role.ecr-role
+  ]
+}
+
+resource "aws_iam_role_policy_attachment" "ecr_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+  role       = aws_iam_role.ecr-role.name
+    depends_on = [
+        aws_iam_role.ecr-role
+  ]
+}
+
+
 resource "aws_eks_cluster" "eks-cluster" {
     name     = var.cluster_name
     role_arn = aws_iam_role.eks-cluster-role.arn
@@ -256,8 +287,14 @@ resource "aws_instance" "jumpbox" {
     subnet_id              = aws_subnet.jumpbox-subnet[0].id
     key_name               = aws_key_pair.key.key_name
     vpc_security_group_ids = [aws_security_group.jumpbox-nsg.id]
+    iam_instance_profile   = aws_iam_instance_profile.jumpbox-profile.name
     depends_on = [
         aws_subnet.eks-subnet,
-        aws_key_pair.key
+        aws_key_pair.key,
+        aws_iam_instance_profile.jumpbox-profile
     ]
+}
+
+resource "aws_ecr_repository" "ecr" {
+    name = var.ecr_name
 }

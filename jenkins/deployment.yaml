@@ -1,0 +1,16 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: jenkins
+  namespace: jenkins
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`live.cddemo.com`) && PathPrefix(`/jenkins`)
+      kind: Rule
+      services:
+        - name: jenkins
+          port: 8080
