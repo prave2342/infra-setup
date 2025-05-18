@@ -46,3 +46,15 @@ variable "jumpbox_nsg_name" {
 variable "my_ip" {
     type = string
 }
+
+variable "ecr_name" {
+    type = string
+}
+
+variable "ecr_role" {
+    type = string
+}
+
+variable "ecr_profile" {
+    type = string
+}
