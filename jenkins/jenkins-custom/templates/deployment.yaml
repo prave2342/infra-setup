@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}
+  labels:
+    app: {{ .Values.name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+    spec:
+      serviceAccountName: jenkins-sa
+      securityContext:
+        runAsUser: 0
+        fsGroup: 0
+      containers:
+        - name: {{ .Values.name }}
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          args: {{ toYaml .Values.containerArgs | nindent 12 }}
+          env:
+            - name: DOCKER_HOST
+              value: tcp://localhost:2375
+          volumeMounts:
+            - name: jenkins-home
+              mountPath: /var/jenkins_home
+        - name: dind
+          image: docker:20.10-dind
+          securityContext:
+            privileged: true
+          ports:
+             - containerPort: 2375
+          args:
+            - --host=tcp://0.0.0.0:2375
+            - --host=unix:///var/run/docker.sock
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+          volumeMounts:
+            - name: dind-storage
+              mountPath: /var/lib/docker
+            volumes:
+        - name: jenkins-home
+          persistentVolumeClaim:
+            claimName: {{ .Values.name }}-pvc
+        - name: dind-storage
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.name }}
+  labels:
+    app: {{ .Values.name }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.containerPort }}
+  selector:
+    app: {{ .Values.name }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.name }}-pvc
+  labels:
+    app: {{ .Values.name }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size }}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Values.name }}
+  annotations:
+    kubernetes.io/ingress.class: traefik
+  labels:
+    app: {{ .Values.name }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`live.cddemo.com`) && PathPrefix(`/jenkins`)
+      kind: Rule
+      services:
+        - name: {{ .Values.name }}
+          port: {{ .Values.service.port }}

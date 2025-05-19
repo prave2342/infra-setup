@@ -1,0 +1,18 @@
+
+name: jenkins-custom
+image:
+  registry: 307562441588.dkr.ecr.ap-south-1.amazonaws.com
+  repository: dev-demo-ecr
+  tag: jenkins-v1
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 8080
+containerPort: 8080
+replicaCount: 1
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 8Gi
+containerArgs:
+  - "--prefix=/jenkins"
