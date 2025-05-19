@@ -1,6 +1,6 @@
 ## Terraform Infrastructure Overview
 
-This Terraform code provisions the AWS infrastrucures.
+This Terraform code provisions the  below AWS infrastrucures.
 
 - VPC with public and private subnets
 - Internet Gateway and NAT Gateway for network access
@@ -53,8 +53,6 @@ Benefits:
 - Stable IP via Elastic IP  
 - Friendly DNS for accessing services behind Traefik
 
----
-
 # Traefik Dashboard Endpoint
 
 - **URL:** `https://live.cddemo.com/dashboard/`  
@@ -89,5 +87,3 @@ Benefits:
 
 - Exposed via Traefik IngressRoute  
 - Accessible at `https://live.cddemo.com/jenkins`  
-
-
