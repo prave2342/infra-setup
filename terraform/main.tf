@@ -201,44 +201,44 @@ resource "aws_iam_role_policy_attachment" "eks-registry" {
     role       = aws_iam_role.eks-node-role.name
 }
 
-resource "aws_iam_role_policy_attachment" "ebs_csi_policy" {
+resource "aws_iam_role_policy_attachment" "ebs-csi_policy" {
     policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
     role       = aws_iam_role.eks-node-role.name 
 }
 
 resource "aws_iam_role" "ecr-role" {
-  name = var.ecr_role
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Effect = "Allow",
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      },
-      Action = "sts:AssumeRole"
-    }]
-  })
+    name = var.ecr_role
+    assume_role_policy = jsonencode({
+        Version = "2012-10-17",
+        Statement = [{
+          Effect = "Allow",
+          Principal = {
+            Service = "ec2.amazonaws.com"
+          },
+          Action = "sts:AssumeRole"
+        }]
+    })
 }
 
 resource "aws_iam_instance_profile" "jumpbox-profile" {
-  name = var.ecr_profile
-  role = aws_iam_role.ecr-role.name
-  depends_on = [
-    aws_iam_role.ecr-role
-  ]
+    name = var.ecr_profile
+    role = aws_iam_role.ecr-role.name
+    depends_on = [
+        aws_iam_role.ecr-role
+      ]
 }
 
-resource "aws_iam_role_policy_attachment" "ecr_policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
-  role       = aws_iam_role.ecr-role.name
+resource "aws_iam_role_policy_attachment" "ecr-policy" {
+    policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+    role       = aws_iam_role.ecr-role.name
     depends_on = [
         aws_iam_role.ecr-role
   ]
 }
 
 resource "aws_iam_role_policy_attachment" "eks-ecr-poweruser" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
-  role       = aws_iam_role.eks-node-role.name
+    policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+    role       = aws_iam_role.eks-node-role.name
 }
 
 
@@ -259,7 +259,7 @@ resource "aws_eks_cluster" "eks-cluster" {
     ]
 }
 
-resource "aws_eks_node_group" "eks_nodes" {
+resource "aws_eks_node_group" "eks-nodes" {
     cluster_name    = aws_eks_cluster.eks-cluster.name
     node_group_name = "${var.cluster_name}-node-group"
     node_role_arn   = aws_iam_role.eks-node-role.arn
