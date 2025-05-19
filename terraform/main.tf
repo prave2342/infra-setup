@@ -236,6 +236,12 @@ resource "aws_iam_role_policy_attachment" "ecr_policy" {
   ]
 }
 
+resource "aws_iam_role_policy_attachment" "eks-ecr-poweruser" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+  role       = aws_iam_role.eks-node-role.name
+}
+
+
 
 resource "aws_eks_cluster" "eks-cluster" {
     name     = var.cluster_name
