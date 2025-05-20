@@ -34,7 +34,7 @@ This setup configures Traefik as the ingress controller on an EKS cluster using:
   Exposes Traefik via an AWS Network Load Balancer (NLB) with Elastic IPs on ports 80, 443, and 8080.
 
 - **Deployment**  
-  Deploys Traefik pods with dashboard, TLS termination, HTTP->HTTPS redirect, and Kubernetes CRD support.
+  Deploys Traefik pods with dashboard,HTTP->HTTPS redirect, and Kubernetes CRD support.
 
 - **Middleware**  
   Redirects HTTP traffic to HTTPS.
